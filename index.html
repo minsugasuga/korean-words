@@ -1105,11 +1105,14 @@ let VOCAB = YONSEI_VOCAB;
 // 如果暂时没有配置自己的 Firebase 项目，下面的同步功能会自动降级为
 // 仅保存在本机浏览器（与之前的行为一致），不会影响正常使用。
 const firebaseConfig = {
-  // TODO: 替换成你自己的 Firebase 项目配置（见使用说明文档）
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
+  apiKey: "AIzaSyDv6n2WT2jxP0Kr4mz0sn_o3aYTiBr_oYo",
+  authDomain: "korean-words-49031.firebaseapp.com",
+  databaseURL: "https://korean-words-49031-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "korean-words-49031",
+  storageBucket: "korean-words-49031.firebasestorage.app",
+  messagingSenderId: "842726167401",
+  appId: "1:842726167401:web:95cd759fffe589dfeb23f8",
+  measurementId: "G-9FQZJ2PZL1"
 };
 
 let fbApp = null, fbDB = null, fbAuthReady = false;
