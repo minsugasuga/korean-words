@@ -1119,6 +1119,8 @@ let fbApp = null, fbDB = null, fbAuthReady = false;
 let syncCode = localStorage.getItem('sync_code') || null;
 let syncEnabled = false;
 
+let fbAuthError = null;
+
 function initFirebase() {
   try {
     if (firebaseConfig.apiKey === "YOUR_API_KEY") {
@@ -1129,11 +1131,20 @@ function initFirebase() {
     fbDB = firebase.database();
     firebase.auth().signInAnonymously().then(() => {
       fbAuthReady = true;
+      fbAuthError = null;
+      updateSyncPill();
       if (syncCode) connectSync(true);
     }).catch(err => {
-      console.warn('Firebase 匿名登录失败，使用本机存储', err);
+      fbAuthError = (err && err.code ? err.code + ': ' : '') + (err && err.message ? err.message : String(err));
+      console.warn('Firebase 匿名登录失败', err);
+      const status = document.getElementById('sync-modal-status');
+      if (status && document.getElementById('sync-modal-overlay').classList.contains('active')) {
+        status.textContent = '登录失败：' + fbAuthError;
+        status.className = 'sync-modal-status error';
+      }
     });
   } catch (e) {
+    fbAuthError = String(e);
     console.warn('Firebase 初始化失败，使用本机存储', e);
   }
 }
@@ -1159,8 +1170,21 @@ function updateSyncPill() {
 function openSyncModal() {
   document.getElementById('sync-modal-overlay').classList.add('active');
   document.getElementById('sync-code-input').value = syncCode || '';
-  document.getElementById('sync-modal-status').textContent = '';
-  document.getElementById('sync-modal-status').className = 'sync-modal-status';
+  const status = document.getElementById('sync-modal-status');
+  status.textContent = '';
+  status.className = 'sync-modal-status';
+
+  // 如果打开弹窗时登录还没完成，过几秒检查一次，方便用户知道具体卡在哪
+  if (!fbAuthReady && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+    setTimeout(() => {
+      if (!fbAuthReady && document.getElementById('sync-modal-overlay').classList.contains('active')) {
+        status.textContent = fbAuthError
+          ? '登录失败：' + fbAuthError
+          : '连接 Google 服务超时，当前网络可能屏蔽了 firebaseapp.com / googleapis.com，换个网络（比如手机热点）试试。';
+        status.className = 'sync-modal-status error';
+      }
+    }, 6000);
+  }
 }
 function closeSyncModal() {
   document.getElementById('sync-modal-overlay').classList.remove('active');
@@ -1183,7 +1207,15 @@ function connectSync(silent) {
     return;
   }
   if (!fbAuthReady) {
-    if (!silent) { status.textContent = '正在连接，请稍候再试一次…'; status.className = 'sync-modal-status'; }
+    if (!silent) {
+      if (fbAuthError) {
+        status.textContent = '登录失败：' + fbAuthError + '（请检查网络，或换一个网络/关闭 VPN 后重试）';
+        status.className = 'sync-modal-status error';
+      } else {
+        status.textContent = '正在连接，请稍候再试一次…如果一直显示这个，可能是当前网络屏蔽了 Google 服务，换个网络（比如手机热点）试试。';
+        status.className = 'sync-modal-status';
+      }
+    }
     return;
   }
 
